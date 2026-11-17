@@ -6,10 +6,10 @@
 
 **Good WiFi starts here. A voucher-based captive portal and hotspot dashboard for Raspberry Pi.**
 
-[![Latest release](https://img.shields.io/github/v/release/Rohan-Reyes/WIPAY?label=download&color=B8EF63)](https://github.com/Rohan-Reyes/WIPAY/releases/latest)
+[![Latest release](https://img.shields.io/github/v/release/Rohan-Reyes/WIPAY?label=download&color=2F7CF6)](https://github.com/Rohan-Reyes/WIPAY/releases/latest)
 [![Raspberry Pi](https://img.shields.io/badge/Raspberry_Pi-Linux-A22846?logo=raspberrypi&logoColor=white)](SETUP_GUIDE)
-[![Python & Flask](https://img.shields.io/badge/Python-Flask-69D6AE?logo=python&logoColor=white)](requirements.txt)
-[![License: GPL v3](https://img.shields.io/badge/license-GPL--3.0-B8EF63)](LICENSE)
+[![Python & Flask](https://img.shields.io/badge/Python-Flask-38C8F0?logo=python&logoColor=white)](requirements.txt)
+[![License: GPL v3](https://img.shields.io/badge/license-GPL--3.0-1747B8)](LICENSE)
 
 [**Download WiPay**](https://github.com/Rohan-Reyes/WIPAY/releases/latest) · [Setup guide](SETUP_GUIDE) · [What's new](CHANGELOG.md)
 
@@ -22,6 +22,7 @@
 - **Your hotspot, your rules.** Give customers timed access with vouchers, configurable plans, speed caps and optional session pausing.
 - **Made for the local network.** Vouchers, devices and settings live in SQLite on your Pi. The interface, chart library and QR decoder are served locally.
 - **One place to run things.** Create vouchers, approve access requests and see connected devices, traffic and system health from a responsive dashboard.
+- **Easy on the eyes.** A calm midnight-blue interface that stays readable on a phone in a dim café or a laptop at the counter.
 
 ## Screenshots
 
@@ -47,7 +48,7 @@
 | **Device management** | Device names, blocking, whitelisting, groups, bandwidth profiles and configurable data quotas. |
 | **Live dashboard** | Session counts, network throughput, upstream checks, CPU, temperature, memory and uptime. |
 | **Charts & records** | Activity charts, top devices, session exports, analytics and admin audit logs. |
-| **Responsive interface** | Mobile navigation drawer, keyboard controls, visible focus and reduced motion support. |
+| **Responsive interface** | Midnight-blue theme, mobile navigation drawer, keyboard controls, visible focus and reduced motion support. |
 | **Optional remote access** | The included tunnel mailer can start a Cloudflare Tunnel and email its URL. Requires separate configuration and internet access. |
 
 WiPay manages vouchers and access. Plan prices are display labels; payment collection is handled by the operator. Camera scanning depends on camera permissions and a secure browser context; plain HTTP captive-portal browsers may require manual code entry.
@@ -96,7 +97,7 @@ Keep **`Project-files/static/` alongside `app4.py`**. It contains the theme, ico
 3. Install the updated `requirements.txt`, and deploy both `app4.py` **and the complete `static/` directory**.
 4. Restart your existing service and check the portal and dashboard. For a virtual environment installation, point the service's `ExecStart` at `/opt/captive-portal/.venv/bin/python`.
 
-Version 1.1.0 requires no new database schema. See the [changelog](CHANGELOG.md) for changes.
+Versions 1.1.0 and 1.2.0 require no new database schema. See the [changelog](CHANGELOG.md) for changes.
 
 ## Try the UI locally
 

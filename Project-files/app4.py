@@ -942,8 +942,8 @@ PORTAL_HTML = """<!DOCTYPE html>
   .footer a:hover { opacity:1; }
 </style>
 <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='wipay.svg') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='wipay.css') }}?v=1.1.0">
-<script defer src="{{ url_for('static', filename='wipay-ui.js') }}?v=1.1.0"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='wipay.css') }}?v=1.2.0">
+<script defer src="{{ url_for('static', filename='wipay-ui.js') }}?v=1.2.0"></script>
 </head>
 <body class="portal-shell">
 <div class="bg-orb orb1"></div>
@@ -1293,8 +1293,8 @@ STATUS_HTML = """<!DOCTYPE html>
   }
 </style>
 <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='wipay.svg') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='wipay.css') }}?v=1.1.0">
-<script defer src="{{ url_for('static', filename='wipay-ui.js') }}?v=1.1.0"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='wipay.css') }}?v=1.2.0">
+<script defer src="{{ url_for('static', filename='wipay-ui.js') }}?v=1.2.0"></script>
 </head>
 <body class="status-shell">
 <div class="bg-orb orb1"></div>
@@ -1820,8 +1820,8 @@ ADMIN_HTML = """<!DOCTYPE html>
   html { scroll-behavior: smooth; }
 </style>
 <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='wipay.svg') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='wipay.css') }}?v=1.1.0">
-<script defer src="{{ url_for('static', filename='wipay-ui.js') }}?v=1.1.0"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='wipay.css') }}?v=1.2.0">
+<script defer src="{{ url_for('static', filename='wipay-ui.js') }}?v=1.2.0"></script>
 </head>
 <body class="admin-shell">
 <a class="skip-link" href="#main-content">Skip to content</a>
@@ -1874,7 +1874,7 @@ ADMIN_HTML = """<!DOCTYPE html>
     <span class="icon">📋</span> Audit Log
   </button>
   <div class="sidebar-footer">
-    <div class="sidebar-version">WiPay · v1.1.0<br>Built for Raspberry Pi</div>
+    <div class="sidebar-version">WiPay · v1.2.0<br>Built for Raspberry Pi</div>
     <a href="/admin/logout">← Logout</a>
   </div>
 </nav>
@@ -3758,8 +3758,8 @@ ADMIN_LOGIN_HTML = """<!DOCTYPE html>
            border-radius: 8px; padding: 10px 14px; }
 </style>
 <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='wipay.svg') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='wipay.css') }}?v=1.1.0">
-<script defer src="{{ url_for('static', filename='wipay-ui.js') }}?v=1.1.0"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='wipay.css') }}?v=1.2.0">
+<script defer src="{{ url_for('static', filename='wipay-ui.js') }}?v=1.2.0"></script>
 </head>
 <body class="login-shell">
 <div class="card">

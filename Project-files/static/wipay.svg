@@ -1,7 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
-  <rect width="64" height="64" rx="18" fill="#b8ef63"/>
-  <g stroke="#14251b" stroke-width="5" stroke-linecap="round">
-    <path d="M14 26c10-10 26-10 36 0M21 34c6-6 16-6 22 0M28 42c2-2 6-2 8 0"/>
+  <defs>
+    <linearGradient id="wp-bg" x1="8" y1="4" x2="56" y2="60" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#4f9dff"/>
+      <stop offset="1" stop-color="#1747b8"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="18" fill="url(#wp-bg)"/>
+  <path d="M10 22a2 2 0 0 1 2-2h40a2 2 0 0 1 2 2v5a5 5 0 0 0 0 10v5a2 2 0 0 1-2 2H12a2 2 0 0 1-2-2v-5a5 5 0 0 0 0-10z" fill="#ffffff" fill-opacity=".14"/>
+  <g stroke="#ffffff" stroke-width="5" stroke-linecap="round">
+    <path d="M16 31c9-9 23-9 32 0M22.5 37.5c5.3-5.3 13.7-5.3 19 0"/>
   </g>
-  <circle cx="32" cy="49" r="3" fill="#14251b"/>
+  <circle cx="32" cy="44.5" r="3.5" fill="#ffffff"/>
+  <circle cx="49" cy="15" r="4" fill="#7fe3ff"/>
 </svg>

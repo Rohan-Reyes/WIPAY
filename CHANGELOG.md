@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.2.0 — 2026-11-17
+
+- Replace the forest and lime theme with a midnight-blue theme across the customer
+  portal, session page, operator sign in and dashboard. Primary buttons now use
+  white text on blue.
+- New WiPay icon: WiFi signal on a blue voucher ticket.
+- Refresh README badges, wording and screenshots for the new look.
+- Bump static asset cache versions to `?v=1.2.0` so browsers pick up the new theme.
+  No database, route or network changes.
+
 ## 1.1.0 — 2026-11-17
 
 - Introduce a shared forest and lime theme, WiPay icon, clearer typography and
