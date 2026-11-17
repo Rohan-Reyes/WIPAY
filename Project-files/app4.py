@@ -8,7 +8,7 @@ try:
 except ImportError:
     psutil = None
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), "static"))
 app.secret_key = secrets.token_hex(32)
 
 DB = "/opt/captive-portal/portal.db"
@@ -941,26 +941,26 @@ PORTAL_HTML = """<!DOCTYPE html>
   .footer a { color:var(--accent); text-decoration:none; font-size:0.78rem; opacity:0.7; transition:opacity 0.2s; }
   .footer a:hover { opacity:1; }
 </style>
+<link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='wipay.svg') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='wipay.css') }}?v=1.1.0">
+<script defer src="{{ url_for('static', filename='wipay-ui.js') }}?v=1.1.0"></script>
 </head>
-<body>
+<body class="portal-shell">
 <div class="bg-orb orb1"></div>
 <div class="bg-orb orb2"></div>
 <div class="card">
-  <div class="logo-row">
-    <div class="wifi-badge">📶</div>
-    <div>
-      <h1>{{ portal_title }}</h1>
-      <div class="subtitle">{{ portal_subtitle }}</div>
-    </div>
-  </div>
+  <div class="logo-row portal-brand"><div class="brand-lockup"><img class="brand-mark" src="{{ url_for('static', filename='wipay.svg') }}" alt="" width="42" height="42"><div><div class="brand-name">WiPay</div><div class="brand-caption">A little WiFi. A lot of possibility.</div></div></div><span class="connection-tag">WiFi portal</span></div>
+  <div class="eyebrow">LET’S GET YOU CONNECTED</div>
+  <h1>{{ portal_title }}</h1>
+  <p class="subtitle">{{ portal_subtitle }}</p>
 
-  {% if error %}<div class="error">⚠️ {{ error }}</div>{% endif %}
+  {% if error %}<div class="error" role="alert">⚠️ {{ error }}</div>{% endif %}
 
-  <div class="tabs">
-    <button class="tab-btn active"   onclick="showTab('type',this)">⌨️ Enter Code</button>
-    <button class="tab-btn"         onclick="showTab('scan',this)">📷 Scan QR</button>
-    <button class="tab-btn"         onclick="showTab('request',this)">📋 Request</button>
-    <button class="tab-btn"         onclick="showTab('history',this)">🕓 History</button>
+  <div class="tabs" role="tablist" aria-label="Ways to connect">
+    <button class="tab-btn active"   onclick="showTab('type',this)">Enter code</button>
+    <button class="tab-btn"         onclick="showTab('scan',this)">Scan QR</button>
+    <button class="tab-btn"         onclick="showTab('request',this)">Request</button>
+    <button class="tab-btn"         onclick="showTab('history',this)">History</button>
   </div>
 
   <!-- TAB: Enter Code -->
@@ -969,21 +969,22 @@ PORTAL_HTML = """<!DOCTYPE html>
     <div style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Available Plans</div>
     <div class="rates-grid">
       {% for plan in data_rates %}
-      <div class="rate-card" onclick="selectPlan(this,'{{ plan.name }}','{{ plan.label }}')">
-        <div class="r-label">{{ plan.label }}</div>
-        <div class="r-name">{{ plan.name }}</div>
-        <div class="r-speed">{{ plan.speed }} Mbps</div>
-      </div>
+      <button type="button" class="rate-card" data-name="{{ plan.name }}" data-label="{{ plan.label }}" data-minutes="{{ plan.minutes }}" data-speed="{{ plan.speed }}" onclick="selectPlan(this, this.dataset.name, this.dataset.label)">
+        <span class="r-label">{{ plan.label }}</span>
+        <span class="r-name">{{ plan.name }}</span>
+        <span class="r-speed">{{ plan.speed }} Mbps</span>
+      </button>
       {% endfor %}
     </div>
     {% endif %}
     <form method="POST" action="/portal/login">
       <div class="form-group">
-        <label>Access Code</label>
+        <label for="code-input">Your access code</label>
         <input type="text" name="code" placeholder="XXXX-XXXX" maxlength="10"
-               autocomplete="off" autofocus required value="{{ prefill_code }}" id="code-input">
+               autocomplete="off" autocapitalize="characters" spellcheck="false" required value="{{ prefill_code }}" id="code-input" aria-describedby="code-hint">
+        <p id="code-hint" class="field-hint">Enter the voucher code from your WiFi provider.</p>
       </div>
-      <button type="submit" class="btn">🔓 Connect to Internet</button>
+      <button type="submit" class="btn">Connect to internet <span aria-hidden="true">→</span></button>
     </form>
   </div>
 
@@ -1020,11 +1021,11 @@ PORTAL_HTML = """<!DOCTYPE html>
       <div style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Choose Plan</div>
       <div class="rates-grid" style="margin-bottom:14px;">
         {% for plan in data_rates %}
-        <div class="rate-card" onclick="selectLobbyPlan(this,'{{ plan.name }}','{{ plan.minutes }}','{{ plan.speed }}','{{ plan.label }}')">
-          <div class="r-label">{{ plan.label }}</div>
-          <div class="r-name">{{ plan.name }}</div>
-          <div class="r-speed">{{ plan.speed }} Mbps</div>
-        </div>
+        <button type="button" class="rate-card" data-name="{{ plan.name }}" data-label="{{ plan.label }}" data-minutes="{{ plan.minutes }}" data-speed="{{ plan.speed }}" onclick="selectLobbyPlan(this, this.dataset.name, this.dataset.minutes, this.dataset.speed, this.dataset.label)">
+          <span class="r-label">{{ plan.label }}</span>
+          <span class="r-name">{{ plan.name }}</span>
+          <span class="r-speed">{{ plan.speed }} Mbps</span>
+      </button>
         {% endfor %}
       </div>
       {% endif %}
@@ -1079,33 +1080,26 @@ PORTAL_HTML = """<!DOCTYPE html>
   </div>
 </div>
 
-<!-- Load jsQR with fallback for captive portal networks -->
-<script>
-  // Try to load jsQR, but don't block if network is restricted
-  (function() {
-    var script = document.createElement('script');
-    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js';
-    script.async = true;
-    script.onerror = function() { 
-      console.warn('jsQR failed to load - QR scanning will be disabled');
-      document.getElementById('start-scan-btn').style.display = 'none';
-      document.querySelector('[onclick="showTab(\'scan\',this)"]').style.display = 'none';
-    };
-    document.head.appendChild(script);
-  })();
-</script>
+<!-- Local decoder works before the customer has internet access. -->
+<script src="{{ url_for('static', filename='vendor/jsQR.js') }}"></script>
 <script>
 function showTab(name, el) {
   document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
   el.classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach(b => b.setAttribute('aria-selected', String(b === el)));
   if (name !== 'scan') stopScanner();
 }
 
 function selectPlan(el, name, label) {
-  document.querySelectorAll('.rates-grid .rate-card').forEach(c => c.classList.remove('selected'));
-  el.classList.add('selected');
+  const requestTab = document.querySelector('[aria-controls="tab-request"]');
+  showTab('request', requestTab);
+  const plan = Array.from(document.querySelectorAll('#tab-request .rate-card')).find(card => card.dataset.name === name && card.dataset.label === label);
+  if (plan) {
+    selectLobbyPlan(plan, plan.dataset.name, plan.dataset.minutes, plan.dataset.speed, plan.dataset.label);
+    document.getElementById('lobby-submit').focus();
+  }
 }
 
 function selectLobbyPlan(el, name, minutes, speed, label) {
@@ -1298,12 +1292,17 @@ STATUS_HTML = """<!DOCTYPE html>
     text-transform: uppercase;
   }
 </style>
+<link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='wipay.svg') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='wipay.css') }}?v=1.1.0">
+<script defer src="{{ url_for('static', filename='wipay-ui.js') }}?v=1.1.0"></script>
 </head>
-<body>
+<body class="status-shell">
 <div class="bg-orb orb1"></div>
 <div class="bg-orb orb2"></div>
 <div class="card">
-  <h1>⏱ Session Status</h1>
+  <div class="brand-lockup"><img class="brand-mark" src="{{ url_for('static', filename='wipay.svg') }}" alt="" width="42" height="42"><div><div class="brand-name">WiPay</div><div class="brand-caption">A little WiFi. A lot of possibility.</div></div></div>
+  <div class="eyebrow">YOUR CONNECTION</div>
+  <h1>Time well connected.</h1>
   {% if expires %}
   <p class="sub">Your session is {% if paused %}paused{% else %}active{% endif %}.</p>
   {% if paused %}<div class="paused-badge">⏸ PAUSED</div>{% endif %}
@@ -1348,10 +1347,9 @@ STATUS_HTML = """<!DOCTYPE html>
   const expiresAt = new Date("{{ expires }}Z");
   function tick() {
     const now = new Date();
-    let diff = Math.max(0, Math.floor((expiresAt - now) / 1000));
+    const diff = Math.max(0, Math.floor((expiresAt - now) / 1000));
     const h = Math.floor(diff / 3600);
-    diff %= 3600;
-    const m = Math.floor(diff / 60);
+    const m = Math.floor((diff % 3600) / 60);
     const s = diff % 60;
     const el = document.getElementById('countdown');
     if (!el) return;
@@ -1373,8 +1371,8 @@ ADMIN_HTML = """<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin — Captive Portal</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<title>WiPay — Network workspace</title>
+<script src="{{ url_for('static', filename='vendor/chart.umd.min.js') }}"></script>
 <style>
   /* No external fonts - system fonts for captive portal compatibility */
   * { margin:0; padding:0; box-sizing:border-box; }
@@ -1821,74 +1819,89 @@ ADMIN_HTML = """<!DOCTYPE html>
 
   html { scroll-behavior: smooth; }
 </style>
+<link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='wipay.svg') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='wipay.css') }}?v=1.1.0">
+<script defer src="{{ url_for('static', filename='wipay-ui.js') }}?v=1.1.0"></script>
 </head>
-<body>
+<body class="admin-shell">
+<a class="skip-link" href="#main-content">Skip to content</a>
 <div class="layout">
 <!-- MOBILE SIDEBAR OVERLAY -->
 <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
 <!-- MOBILE TOP BAR -->
 <div class="topbar" id="topbar">
-  <button class="topbar-hamburger" onclick="toggleSidebar()" aria-label="Menu">&#9776;</button>
-  <span class="topbar-title">🛡️ Portal Admin</span>
+  <button class="topbar-hamburger" onclick="toggleSidebar()" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false">&#9776;</button>
+  <span class="topbar-title"><img src="{{ url_for('static', filename='wipay.svg') }}" alt="">WiPay</span>
   <div class="topbar-live"><span class="live-dot"></span>LIVE</div>
 </div>
 <!-- SIDEBAR -->
-<nav class="sidebar" id="sidebar">
+<nav class="sidebar" id="sidebar" aria-label="Main navigation">
   <div class="sidebar-logo">
-    <h1>🛡️ Portal Admin</h1>
-    <div class="v"><span class="live-dot"></span>LIVE</div>
+<div class="brand-lockup"><img class="brand-mark" src="{{ url_for('static', filename='wipay.svg') }}" alt="" width="42" height="42"><div><div class="brand-name">WiPay</div><div class="brand-caption">A little WiFi. A lot of possibility.</div></div></div>
+    <div class="brand-caption" style="margin-top:14px;">Your network workspace</div>
   </div>
-  <div class="nav-item active" onclick="showPage('dashboard',this)">
+  <div class="nav-section">Workspace</div>
+  <button type="button" class="nav-item active" onclick="showPage('dashboard',this)">
     <span class="icon">📊</span> Dashboard
-  </div>
-  <div class="nav-item" onclick="showPage('sessions',this)">
+  </button>
+  <button type="button" class="nav-item" onclick="showPage('sessions',this)">
     <span class="icon">📡</span> Sessions
     {% if active_count > 0 %}<span class="badge badge-green" style="margin-left:auto">{{ active_count }}</span>{% endif %}
-  </div>
-  <div class="nav-item" onclick="showPage('charts',this)">
+  </button>
+  <button type="button" class="nav-item" onclick="showPage('charts',this)">
     <span class="icon">📊</span> Charts
-  </div>
-  <div class="nav-item" onclick="showPage('lobby',this)">
+  </button>
+  <button type="button" class="nav-item" onclick="showPage('lobby',this)">
     <span class="icon">🚪</span> Lobby
     {% if lobby_pending > 0 %}<span class="badge badge-warn" style="margin-left:auto">{{ lobby_pending }}</span>{% endif %}
-  </div>
-  <div class="nav-item" onclick="showPage('devices',this)">
+  </button>
+  <button type="button" class="nav-item" onclick="showPage('devices',this)">
     <span class="icon">💻</span> Devices
-  </div>
-  <div class="nav-item" onclick="showPage('vouchers',this)">
+  </button>
+  <button type="button" class="nav-item" onclick="showPage('vouchers',this)">
     <span class="icon">🎟️</span> Vouchers
-  </div>
-  <div class="nav-item" onclick="showPage('diagnostics',this)">
+  </button>
+  <button type="button" class="nav-item" onclick="showPage('diagnostics',this)">
     <span class="icon">🔬</span> Diagnostics
-  </div>
-  <div class="nav-item" onclick="showPage('settings',this)">
+  </button>
+  <button type="button" class="nav-item" onclick="showPage('settings',this)">
     <span class="icon">⚙️</span> Settings
-  </div>
-  <div class="nav-item" onclick="showPage('analytics',this)">
+  </button>
+  <button type="button" class="nav-item" onclick="showPage('analytics',this)">
     <span class="icon">📊</span> Analytics
-  </div>
-  <div class="nav-item" onclick="showPage('audit',this)">
+  </button>
+  <button type="button" class="nav-item" onclick="showPage('audit',this)">
     <span class="icon">📋</span> Audit Log
-  </div>
+  </button>
   <div class="sidebar-footer">
+    <div class="sidebar-version">WiPay · v1.1.0<br>Built for Raspberry Pi</div>
     <a href="/admin/logout">← Logout</a>
   </div>
 </nav>
 
 <!-- MAIN CONTENT -->
-<main class="main">
-{% if message %}<div class="toast">✅ {{ message }}</div>{% endif %}
+<main class="main" id="main-content" tabindex="-1">
+<header class="workspace-header">
+  <div class="workspace-breadcrumb">Workspace <span>/ Network overview</span></div>
+  <div class="workspace-actions"><span class="connection-tag">Local management</span><a href="/portal" target="_blank" rel="noopener">Open portal ↗</a></div>
+</header>
+{% if message %}<div class="toast" role="status">✅ {{ message }}</div>{% endif %}
 
 <!-- ═══════════════ DASHBOARD ═══════════════ -->
 <div class="page active" id="page-dashboard">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-    <div class="page-title">System Dashboard</div>
+  <div class="dashboard-heading" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+    <div><div class="eyebrow">NETWORK OVERVIEW</div><h1 class="page-title">A good day to be connected.</h1></div>
     <div style="display:flex;align-items:center;gap:10px;">
       <span id="dash-refresh-dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent2);animation:livePulse 1.5s ease-in-out infinite;"></span>
       <span style="color:var(--muted);font-size:0.78rem;" id="dash-last-updated">Live</span>
     </div>
   </div>
-  <div class="page-sub">Auto-refreshes every 3 seconds</div>
+  <div class="page-sub">Your hotspot at a glance. Sessions, traffic and system health, refreshed every 3 seconds.</div>
+  <div class="quick-actions" aria-label="Quick actions">
+    <button type="button" onclick="navigateTo('vouchers')">＋ Create vouchers</button>
+    <button type="button" onclick="navigateTo('sessions')">View sessions</button>
+    <button type="button" onclick="navigateTo('lobby')">Open lobby</button>
+  </div>
 
   <!-- Top stat row -->
   <div class="stat-grid">
@@ -1920,7 +1933,7 @@ ADMIN_HTML = """<!DOCTYPE html>
   </div>
 
   <!-- Network speed row -->
-  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-bottom:28px;">
+  <div class="traffic-grid">
     <div class="health-card" style="border-color:rgba(59,130,246,0.3);">
       <h3>⬇️ Download Speed</h3>
       <div class="metric-val c-blue" id="d-rx-speed">—</div>
@@ -2803,6 +2816,10 @@ function showPage(name, el) {
   const pageEl = document.getElementById('page-' + name);
   if (pageEl) pageEl.classList.add('active');
   if (el) el.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(item => {
+    if (item === el) item.setAttribute('aria-current', 'page');
+    else item.removeAttribute('aria-current');
+  });
   if (name === 'dashboard') startDashboardPolling();
   else stopDashboardPolling();
   if (name === 'sessions') startSessionsPolling();
@@ -3086,9 +3103,10 @@ document.getElementById('edit-modal-overlay').addEventListener('click', function
 // Activate correct page from URL hash
 window.addEventListener('DOMContentLoaded', () => {
   const hash = location.hash.replace('#','');
-  if (hash) {
-    const nav = document.querySelector(`.nav-item[onclick*="'${hash}'"]`);
-    if (nav) showPage(hash, nav);
+  const nav = Array.from(document.querySelectorAll('.nav-item')).find(item =>
+    item.getAttribute('onclick') === `showPage('${hash}',this)`);
+  if (nav) {
+    showPage(hash, nav);
   } else {
     // Initialize dashboard on first load
     const dashboardNav = document.querySelector(`.nav-item[onclick*="'dashboard'"]`);
@@ -3698,9 +3716,10 @@ ADMIN_LOGIN_HTML = """<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Admin Login</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WiPay — Admin sign in</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;600;700&display=swap');
+
   * { margin:0; padding:0; box-sizing:border-box; }
   body {
     font-family: 'IBM Plex Sans', sans-serif;
@@ -3738,16 +3757,23 @@ ADMIN_LOGIN_HTML = """<!DOCTYPE html>
            background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2);
            border-radius: 8px; padding: 10px 14px; }
 </style>
+<link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='wipay.svg') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='wipay.css') }}?v=1.1.0">
+<script defer src="{{ url_for('static', filename='wipay-ui.js') }}?v=1.1.0"></script>
 </head>
-<body>
+<body class="login-shell">
 <div class="card">
-  <h1>🛡️ Admin Login</h1>
-  <p>Captive Portal Management</p>
-  {% if error %}<div class="error">{{ error }}</div>{% endif %}
+  <div class="brand-lockup"><img class="brand-mark" src="{{ url_for('static', filename='wipay.svg') }}" alt="" width="42" height="42"><div><div class="brand-name">WiPay</div><div class="brand-caption">A little WiFi. A lot of possibility.</div></div></div>
+  <div class="eyebrow">OPERATOR ACCESS</div>
+  <h1>Welcome back.</h1>
+  <p>Sign in to manage your hotspot, vouchers and connected devices.</p>
+  {% if error %}<div class="error" role="alert">{{ error }}</div>{% endif %}
   <form method="POST">
-    <input type="password" name="password" placeholder="Enter admin password" autofocus>
-    <button type="submit">Login →</button>
+    <label for="admin-password">Admin password</label>
+    <input id="admin-password" type="password" name="password" placeholder="Enter your password" autocomplete="current-password" required>
+    <button class="login-submit" type="submit">Sign in <span aria-hidden="true">→</span></button>
   </form>
+  <a class="login-back" href="/portal">← Back to WiFi portal</a>
 </div>
 </body>
 </html>"""

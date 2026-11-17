@@ -1,159 +1,147 @@
-# 🌐 WiPay — Raspberry Pi Captive Portal & Piso WiFi System
+<div align="center">
 
-> A lightweight, feature-rich captive portal built for Raspberry Pi. Turn your Pi into a fully managed WiFi hotspot with voucher-based authentication, remote administration, and real-time analytics.
+<img src="Project-files/static/wipay.svg" width="88" alt="WiPay icon">
 
----
+# WiPay
 
-## ✨ Features
+**Good WiFi starts here. A voucher-based captive portal and hotspot dashboard for Raspberry Pi.**
 
-| Feature | Description |
+[![Latest release](https://img.shields.io/github/v/release/Rohan-Reyes/WIPAY?label=download&color=B8EF63)](https://github.com/Rohan-Reyes/WIPAY/releases/latest)
+[![Raspberry Pi](https://img.shields.io/badge/Raspberry_Pi-Linux-A22846?logo=raspberrypi&logoColor=white)](SETUP_GUIDE)
+[![Python & Flask](https://img.shields.io/badge/Python-Flask-69D6AE?logo=python&logoColor=white)](requirements.txt)
+[![License: GPL v3](https://img.shields.io/badge/license-GPL--3.0-B8EF63)](LICENSE)
+
+[**Download WiPay**](https://github.com/Rohan-Reyes/WIPAY/releases/latest) · [Setup guide](SETUP_GUIDE) · [What's new](CHANGELOG.md)
+
+<img src="docs/images/dashboard.png" alt="WiPay dashboard with live session counts, traffic, network status and Raspberry Pi health">
+
+</div>
+
+## Why WiPay
+
+- **Your hotspot, your rules.** Give customers timed access with vouchers, configurable plans, speed caps and optional session pausing.
+- **Made for the local network.** Vouchers, devices and settings live in SQLite on your Pi. The interface, chart library and QR decoder are served locally.
+- **One place to run things.** Create vouchers, approve access requests and see connected devices, traffic and system health from a responsive dashboard.
+
+## Screenshots
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/images/portal.png" width="230" alt="Customer portal with plans and voucher entry"><br><sub><b>Connect</b><br>Enter a voucher or choose a plan</sub></td>
+    <td align="center"><img src="docs/images/request.png" width="230" alt="Plan request confirmation"><br><sub><b>Request</b><br>Ask the operator for access</sub></td>
+    <td align="center"><img src="docs/images/session.png" width="230" alt="Active session countdown and pause button"><br><sub><b>Session</b><br>Check time, pause and resume</sub></td>
+    <td align="center"><img src="docs/images/login.png" width="230" alt="Administrator sign in"><br><sub><b>Manage</b><br>A dedicated operator sign in</sub></td>
+  </tr>
+</table>
+
+<sub>Real application screens with fictional sample data and simulated network metrics. Preview tools never configure your firewall.</sub>
+
+## Features
+
+| | |
 |---|---|
-| 🎫 **Voucher Authentication** | Generate and manage time-limited access codes with configurable durations and speeds |
-| 📱 **QR Code Support** | Users can scan QR codes directly on the portal page for quick login |
-| 🔥 **Automated Firewall** | Integrated `iptables` management handles traffic redirection and per-device blocking |
-| 📶 **Bandwidth Control** | Per-user speed limiting via Linux Traffic Control (`tc`) with configurable Mbps caps |
-| 🌍 **Remote Admin Panel** | Access your dashboard from anywhere using a Cloudflare Tunnel — no port forwarding needed |
-| 📧 **Email Notifications** | Automatically emails you the dynamic tunnel URL whenever it changes |
-| 📊 **Real-time Analytics** | Monitor system health, connected devices, active sessions, and bandwidth usage |
-| ⏸️ **Session Pause/Resume** | Users can pause their sessions to preserve remaining time |
-| 📋 **Lobby Queue** | Users can request access plans; admin approves and grants codes from the dashboard |
-| 🔒 **Device Management** | Whitelist, block, or assign groups/quotas to devices by MAC address |
-| 📁 **Audit Logs** | Full admin action history with timestamps and session logs |
-| 💾 **Data Export** | Export vouchers and session data as CSV from the admin dashboard |
+| **Voucher access** | Generate individual or bulk vouchers with duration, speed and QR codes. Export or import vouchers as CSV. |
+| **Customer portal** | Enter a code, scan a QR voucher, request a plan or revisit device history. Selecting a plan fills the request form. |
+| **Session control** | Live countdowns, optional pause/resume, time adjustments and manual revocation. |
+| **Access requests** | A lobby queue where operators approve requests and issue access codes. |
+| **Device management** | Device names, blocking, whitelisting, groups, bandwidth profiles and configurable data quotas. |
+| **Live dashboard** | Session counts, network throughput, upstream checks, CPU, temperature, memory and uptime. |
+| **Charts & records** | Activity charts, top devices, session exports, analytics and admin audit logs. |
+| **Responsive interface** | Mobile navigation drawer, keyboard controls, visible focus and reduced motion support. |
+| **Optional remote access** | The included tunnel mailer can start a Cloudflare Tunnel and email its URL. Requires separate configuration and internet access. |
 
----
+WiPay manages vouchers and access. Plan prices are display labels; payment collection is handled by the operator. Camera scanning depends on camera permissions and a secure browser context; plain HTTP captive-portal browsers may require manual code entry.
 
-## 📁 Project Structure
+## Install on Raspberry Pi
 
-```
-WIPAY/
-├── Project-files/
-│   ├── app4.py              # Core Flask application — portal UI, admin dashboard, REST API
-│   ├── setup_firewall.sh    # Configures iptables NAT, forwarding rules, and tc bandwidth tree
-│   └── tunnel_mailer.py     # Starts Cloudflare Tunnel and emails the admin URL on startup
-├── README.md
-└── LICENSE
-```
+Requirements: Python 3.10+, Raspberry Pi OS or a compatible Debian-based Linux system, and separate client-facing and internet-facing network interfaces. A built-in WiFi hotspot also needs `hostapd` and `dnsmasq`.
 
-### Key Components
+1. Download the source from the [latest release](https://github.com/Rohan-Reyes/WIPAY/releases/latest), or clone the repository:
 
-**`app4.py`** — The heart of WiPay. Handles:
-- User-facing captive portal (voucher entry, QR scan, lobby request)
-- Admin dashboard (voucher generation, session management, analytics)
-- REST API endpoints for real-time data (`/admin/api/...`)
-- SQLite database with WAL mode for concurrent read performance
-- iptables integration for granting/revoking internet access per device
-- Per-IP speed limiting via Linux `tc` HTB queuing discipline
+   ```bash
+   sudo git clone https://github.com/Rohan-Reyes/WIPAY.git /opt/captive-portal
+   sudo chown -R "$USER":"$USER" /opt/captive-portal
+   cd /opt/captive-portal
+   python3 -m venv .venv
+   .venv/bin/python -m pip install -r requirements.txt
+   ```
 
-**`setup_firewall.sh`** — Run once on boot to configure:
-- IPv4 forwarding
-- NAT masquerading for internet sharing
-- Custom `CAPTIVE_PORTAL` iptables chain to redirect HTTP traffic to Flask
-- `tc` root bandwidth tree on the hotspot interface
+2. Follow the [setup guide](SETUP_GUIDE) for static IP, DHCP/DNS, hotspot, firewall and service configuration **before starting the production app**. Install system dependencies such as `python3-venv`, `iptables` and `iproute2` as needed.
 
-**`tunnel_mailer.py`** — Optional but recommended for remote access:
-- Launches `cloudflared` as a subprocess
-- Parses stdout for the `trycloudflare.com` URL
-- Sends the URL to your Gmail inbox
-- Auto-restarts the tunnel if it crashes
+   The checked-in firewall uses **`eth0` for clients** and **`wlan0` for internet**. Verify your actual interface names. If your hotspot uses `wlan0`, change the firewall settings and the `tc` device arguments in `app4.py` together. The guide describes this arrangement.
 
----
+3. Set an admin password and launch from your configured Pi:
 
-## 🗄️ Database Schema
+   ```bash
+   export ADMIN_SECRET='replace-with-a-long-unique-password'
+   cd /opt/captive-portal/Project-files
+   ../.venv/bin/python app4.py
+   ```
 
-WiPay uses a SQLite database (`portal.db`) with the following tables:
+   The process needs write access to `/opt/captive-portal/portal.db` and permissions for Linux networking commands. The app refuses to start when `ADMIN_SECRET` is missing. Use the service and permission setup in the guide for deployment.
 
-| Table | Purpose |
+| Open | Default address |
 |---|---|
-| `codes` | Voucher records — duration, speed, expiry, pause state, device assignment |
-| `devices` | Known devices — MAC, name, IP, whitelist/block status, quotas |
-| `settings` | Key-value store for portal title, rates, quotas, feature flags |
-| `lobby_requests` | Pending access requests from users awaiting admin approval |
-| `session_logs` | Per-session bandwidth usage records |
-| `admin_logs` | Admin action audit trail |
-| `device_groups` | Named groups with optional speed limits for batch device management |
-| `bandwidth_profiles` | Reusable speed/quota templates assignable to devices |
-| `activity_history` | Time-series snapshots of active sessions and throughput |
+| **Customer portal** | `http://192.168.50.1:8080/portal` |
+| **Admin dashboard** | `http://192.168.50.1:8081/admin` |
 
----
+Both listeners serve the same Flask application; the second port is a convenient admin entry point, not an isolation boundary. Keep administration on a trusted network or behind your configured access controls.
 
-## 🔐 Security Highlights
+Keep **`Project-files/static/` alongside `app4.py`**. It contains the theme, icon and bundled browser libraries. There is no Node.js build step.
 
-- **ADMIN_SECRET enforcement** — The app refuses to start without a strong `ADMIN_SECRET` environment variable set.
-- **Input validation** — All IP addresses and hostnames are validated with regex before being used in system calls.
-- **iptables caching** — Firewall checks are cached with a 10-second TTL to prevent slow subprocess calls on every request.
-- **No interactive sudo** — All system commands use `sudo -n` (non-interactive) to prevent password prompt hangs.
-- **Response cache control** — Real-time API endpoints always return `no-store` headers; static assets are cached appropriately.
+## Update an existing installation
 
----
+1. Stop your WiPay service and back up `/opt/captive-portal/portal.db`. Stopping the service before copying avoids an incomplete SQLite WAL backup.
+2. Update the source or extract the new release. Preserve your admin environment, database and local network/tunnel configuration. Review local edits before using `git pull`.
+3. Install the updated `requirements.txt`, and deploy both `app4.py` **and the complete `static/` directory**.
+4. Restart your existing service and check the portal and dashboard. For a virtual environment installation, point the service's `ExecStart` at `/opt/captive-portal/.venv/bin/python`.
 
-## 🖥️ Admin Dashboard
+Version 1.1.0 requires no new database schema. See the [changelog](CHANGELOG.md) for changes.
 
-Access the admin panel at `http://<your-pi-ip>:8080/admin` (or via your Cloudflare Tunnel URL).
+## Try the UI locally
 
-**Dashboard capabilities:**
-- View and manage all voucher codes (active, used, expired)
-- Generate single or bulk vouchers with custom duration, speed cap, and expiry
-- Monitor live connected devices and session timers
-- Approve or deny lobby access requests
-- Block or whitelist devices by MAC address
-- Assign devices to groups with shared speed profiles
-- View bandwidth usage charts and system health metrics (CPU, RAM, disk)
-- Export data to CSV
-- Configure portal appearance, pricing plans, and quota settings
+Preview the interface on Windows, macOS or Linux without a Raspberry Pi. From the repository root:
 
----
+```bash
+python -m venv .venv
+# Linux/macOS: source .venv/bin/activate
+# PowerShell:  .venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+python tools/preview.py
+```
 
-## 🔗 User Flow
+Open **`http://127.0.0.1:8090/portal`**. Admin is at **`/admin`**, with password **`wipay-preview`** unless you already set `ADMIN_SECRET`. The unused sample voucher is **`WIFI-2026`**. The preview uses a disposable database, fictional devices and simulated network metrics; it does not grant internet access. Stop it with Ctrl+C.
 
-1. User connects to the hotspot Wi-Fi network.
-2. Any HTTP request is intercepted by `iptables` and redirected to the Flask portal on port 8080.
-3. The portal displays the branded login page with a voucher entry field, QR scan option, and available plans.
-4. User enters a valid voucher code or submits a lobby request.
-5. On success, their IP is added to `iptables FORWARD` with an `ACCEPT` rule, granting internet access.
-6. A countdown timer tracks remaining session time; the app automatically revokes access on expiry.
-7. Users may pause/resume their session if the feature is enabled by the admin.
+<details>
+<summary>Browser checks and README screenshots</summary>
 
----
+```bash
+python -m pip install -r requirements-dev.txt
+python -m playwright install chromium
+python tools/check_ui.py
+```
 
-## ⚙️ Configuration Reference
+The check launches its own loopback server with disposable data, verifies the main customer and admin flows, tests mobile/tablet layouts, and regenerates `docs/images/`. It blocks external browser requests and checks that the UI loads without them. Linux CI may need `python -m playwright install --with-deps chromium`.
 
-Key settings managed through the admin panel (`/admin/settings`):
+These checks simulate Linux network operations. Firewall forwarding, real bandwidth limiting, DHCP and camera hardware still need verification on your deployment.
 
-| Setting | Default | Description |
-|---|---|---|
-| `portal_title` | `WiFi Access` | Main heading shown on the portal login page |
-| `portal_subtitle` | *(descriptive text)* | Subtitle shown below the title |
-| `show_rates` | `1` | Show pricing plans on the portal |
-| `data_rates` | *(JSON array)* | Plan definitions: name, minutes, speed (Mbps), label (price) |
-| `allow_pause` | `1` | Allow users to pause active sessions |
-| `max_pause_seconds` | `0` | Max cumulative pause time per session (0 = unlimited) |
-| `absolute_expiry_hours` | `0` | Hard wall-clock expiry regardless of pausing (0 = disabled) |
-| `default_daily_quota_mb` | `0` | Default daily bandwidth cap per device (0 = unlimited) |
-| `default_hourly_quota_mb` | `0` | Default hourly bandwidth cap per device (0 = unlimited) |
-| `enable_audit_logs` | `1` | Record admin actions to the audit log |
-| `enable_session_logs` | `1` | Record session bandwidth data |
-| `qr_logo_url` | *(empty)* | URL to an image overlaid on generated QR codes |
+</details>
 
----
+## Project layout
 
-## 🛠️ Tech Stack
+```text
+Project-files/
+  app4.py                 Flask routes, embedded templates and network control
+  static/                 Shared theme, UI enhancements, WiPay icon and libraries
+  setup_firewall.sh       Linux NAT, forwarding and bandwidth setup
+  tunnel_mailer.py        Optional remote tunnel and email helper
+tools/                    Disposable UI preview and Chromium checks
+docs/images/              Application screenshots with sample data
+requirements.txt          Runtime Python dependencies
+SETUP_GUIDE               Detailed Raspberry Pi deployment instructions
+CHANGELOG.md              Release history
+```
 
-- **Python 3** with **Flask** — Web framework for portal and admin API
-- **SQLite** (WAL mode) — Embedded database for vouchers, devices, and logs
-- **iptables** — Firewall-level per-device internet access control
-- **Linux tc (Traffic Control)** — Per-IP bandwidth limiting using HTB queuing
-- **Cloudflare Tunnel** (`cloudflared`) — Secure remote access without port forwarding
-- **qrcode** — QR code generation for vouchers
-- **psutil** — System health metrics (CPU, RAM, disk, network)
-- **dnsmasq** — DHCP lease parsing for device hostname resolution
+## License
 
----
-
-## 📄 License
-
-See [LICENSE](./LICENSE) for full terms.
-
----
-
-*WiPay is designed for deployment on Raspberry Pi OS but should work on any Debian/Ubuntu-based Linux system with two network interfaces.*
+[GNU GPL v3](LICENSE). Made by Rohan Reyes. Bundled [Chart.js and jsQR](Project-files/static/vendor/README.md) retain their respective licenses.

@@ -173,10 +173,12 @@ pip3 install qrcode[pil] psutil --break-system-packages
 
 ```bash
 cd /opt
-sudo git clone https://github.com/makeitwork0/WIPAY.git captive-portal
+sudo git clone https://github.com/Rohan-Reyes/WIPAY.git captive-portal
 sudo chown -R $USER:$USER /opt/captive-portal
 cd /opt/captive-portal/Project-files
 ```
+
+The `Project-files/static/` directory contains the shared UI, WiPay icon and locally bundled JavaScript libraries. Keep it next to `app4.py` when deploying or updating; copying only the Python file will leave the UI without its theme and scripts.
 
 ### Configure `tunnel_mailer.py` (for Remote Access)
 
@@ -215,7 +217,7 @@ PORTAL_PORT="8080"
 GATEWAY_IP="192.168.50.1"
 ```
 
-Run `ip link show` to list your interfaces and confirm the names.
+Run `ip link show` to list your interfaces and confirm the names. The checked-in firewall defaults are `HOTSPOT_IF="eth0"` and `INTERNET_IF="wlan0"`; this guide uses the opposite arrangement for a built-in WiFi access point. The `tc` commands in `set_speed_limit()` and `remove_speed_limit()` in `app4.py` also use `eth0` by default. Change those `dev` arguments to your actual hotspot interface (`wlan0` for this guide), otherwise per-device bandwidth limits will target the wrong interface.
 
 ---
 
@@ -399,7 +401,7 @@ sudo journalctl -u wipay.service -f    # Live logs
 ### Local Access
 
 ```
-http://192.168.50.1:8080/admin
+http://192.168.50.1:8081/admin
 ```
 
 ### Remote Access (via Cloudflare Tunnel)
