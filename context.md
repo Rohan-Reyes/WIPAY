@@ -1,0 +1,173 @@
+# WiPay AI handoff
+
+Last updated: 2026-11-17.
+
+## Request and current status
+
+The owner asked to download `Rohan-Reyes/WIPAY`, improve the UI and README using
+their `Rohan-Reyes/Freefinance` README as a reference, push the changes, and publish
+a new GitHub release. That work is complete.
+
+- Repository: https://github.com/Rohan-Reyes/WIPAY
+- Local checkout in this session: `C:\Users\User\WIPAY`
+- Default branch: `main`
+- Implementation commit: `90ba5181583ccfe7e3d2557652cd11c5463fd618`
+- Published latest release: https://github.com/Rohan-Reyes/WIPAY/releases/tag/v1.1.0
+- Release assets: `WiPay-1.1.0.zip` and `SHA256SUMS.txt`, both confirmed uploaded.
+- Release ZIP SHA-256: `3a51770d8db34f7bca76fe4da3e6f6bbfae62cccd31c95da34dfed4c19b2336e`
+- Previous release was named `1.0.0`, but its actual Git tag is `new`.
+- This handoff document is a subsequent documentation change. It is not included
+  in the already published v1.1.0 archive; do not replace that release to add it.
+
+The owner's latest request is to create this file so another AI can take over.
+No further product changes or deployment tasks are currently pending.
+
+## What changed
+
+- Shared forest and lime theme, WiPay SVG icon, clearer forms and responsive cards
+  across the customer portal, session page, operator login and dashboard.
+- Dashboard shortcuts to vouchers, sessions and the request lobby.
+- Native buttons for plan selection and admin navigation; keyboard-operated tabs,
+  focus styles, skip link, reduced motion and mobile drawer focus handling.
+- Selecting an available plan opens and fills the request form. Request results
+  automatically open the Request tab when the customer returns.
+- Locally bundled Chart.js 4.4.9 and jsQR 1.4.0. Removed the login page's external
+  font import. Browser UI assets no longer require internet access.
+- Fixed session countdown logic: it previously used the seconds remaining modulo
+  one hour to decide expiry and low-time warnings. It now uses total seconds.
+- Fixed chart canvas and pricing editor overflow on narrow viewports.
+- Rebuilt the README with Freefinance's centered header, badges, screenshot gallery,
+  feature table, installation, updates, preview and project layout structure.
+- Corrected the setup guide's clone URL and admin port; documented interface
+  differences and deployment of the new static directory.
+- Added dependency manifests, a disposable preview, browser verification and
+  screenshots made from fictional sample data.
+
+## Architecture and important files
+
+This is a Python Flask captive portal for a Linux/Raspberry Pi hotspot. It is not
+a Node/React app and has no frontend build step. Existing templates remain embedded
+as Python strings. Legacy component CSS remains in those templates; the new shared
+stylesheet loads afterward and overrides its presentation.
+
+| File | Purpose |
+|---|---|
+| `Project-files/app4.py` | Flask application, embedded HTML/CSS/JS, SQLite access, Linux firewall and traffic control integration. |
+| `Project-files/static/wipay.css` | Shared design tokens, theme, responsive layout and accessibility styles. |
+| `Project-files/static/wipay-ui.js` | Tab semantics and keyboard controls, navigation shortcuts, mobile drawer behavior. |
+| `Project-files/static/wipay.svg` | WiPay brand mark and favicon. |
+| `Project-files/static/vendor/` | Unmodified browser library distributions, licenses and version/source notes. |
+| `Project-files/setup_firewall.sh` | Linux NAT, forwarding and bandwidth setup. Do not run on a development workstation. |
+| `Project-files/tunnel_mailer.py` | Optional Cloudflare Tunnel and Gmail notification helper; still requires operator configuration. |
+| `tools/preview.py` | Loopback-only preview with a temporary SQLite database, fictional devices and simulated network operations/metrics. |
+| `tools/check_ui.py` | Chromium browser checks using an ephemeral loopback server; regenerates screenshots. |
+| `docs/images/` | Actual browser screenshots of sample data. |
+| `requirements.txt` | Flask, qrcode with Pillow, psutil. |
+| `requirements-dev.txt` | Runtime dependencies plus Playwright. |
+| `README.md`, `SETUP_GUIDE`, `CHANGELOG.md` | User documentation and release history. |
+
+Flask's static folder is explicitly resolved relative to `app4.py`, so both the
+normal entry point and dynamically imported preview can serve the same assets.
+The HTML currently uses `?v=1.1.0` on the shared CSS and UI script; update cache
+versions deliberately when making future releases.
+
+## Production behavior and deployment constraints
+
+- Production database: `/opt/captive-portal/portal.db`, SQLite with WAL mode.
+- The app requires a nonempty `ADMIN_SECRET` environment variable. It does not
+  enforce password complexity. Never commit production passwords or database files.
+- Production entry point: `python app4.py` from `Project-files/`. It initializes
+  the database, starts expiry/background work, and serves ports 8080 and 8081.
+- Customer portal: `http://192.168.50.1:8080/portal`.
+- Convenient admin entry point: `http://192.168.50.1:8081/admin`.
+- Both ports serve the same Flask app and routes. The admin port does not provide
+  network isolation. Existing authentication behavior was preserved.
+- Deploy `static/` alongside `app4.py`. Copying only the Python file loses the
+  shared theme, UI enhancements and local browser libraries.
+- Checked-in firewall defaults: hotspot/client interface `eth0`, uplink `wlan0`.
+  Traffic control functions also hardcode `eth0`. The setup guide describes a
+  built-in WiFi hotspot with the opposite arrangement; both firewall settings and
+  the Python `tc` device arguments must match the actual deployment.
+- No new database schema was introduced in 1.1.0. Back up the database with the
+  service stopped before updating, and preserve local network/tunnel settings.
+- Plan prices are display labels. Payments are handled by the operator; there is
+  no new payment gateway integration.
+- QR decoding loads locally, but camera access still depends on permissions and
+  a secure browser context. Some plain HTTP captive portal browsers cannot scan.
+- The project license is GPL v3. Chart.js is MIT; jsQR is Apache-2.0. Retain the
+  bundled license files. Do not copy Freefinance's MIT license into this project.
+
+## Local preview and verification
+
+This session used Windows PowerShell, Python 3.14.7, Node 26.7.0 and a local
+`.venv`. Node was only used for a JavaScript syntax check. The README documents
+Python 3.10+ for installation; that full version/platform matrix was not tested.
+
+Run from the repository root:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python -m pip install -r requirements-dev.txt
+.\.venv\Scripts\python -m playwright install chromium
+.\.venv\Scripts\python tools\preview.py
+```
+
+Preview: `http://127.0.0.1:8090/portal`; admin path `/admin`. Default preview
+password is `wipay-preview` unless `ADMIN_SECRET` is already set. The unused sample
+voucher is `WIFI-2026`. This password is for the disposable preview only.
+
+```powershell
+.\.venv\Scripts\python tools\check_ui.py
+.\.venv\Scripts\python -m compileall -q Project-files tools
+.\.venv\Scripts\python -m pip check
+node --check Project-files/static/wipay-ui.js
+```
+
+Linux/macOS use `.venv/bin/python` instead. Linux browser environments may need
+`python -m playwright install --with-deps chromium`.
+
+Checks that passed before release:
+
+- Plan selection fills the correct access request; submissions show confirmation.
+- Arrow-key tab navigation, local QR decoder availability, invalid voucher errors.
+- Valid voucher login, countdown display and pause/resume through real Flask routes.
+- Exact two-hour boundary regression using a fixed browser clock: the session stays
+  active, reads `02:00:00` and is not flagged as nearly expired.
+- Unauthorized admin redirect, wrong-password feedback and successful sign in.
+- All ten operator sections render without uncaught JavaScript errors.
+- Admin pages stay within viewport widths 320, 390, 768 and 1024; desktop at 1440.
+- Mobile drawer expanded state, Escape dismissal and restored menu-button focus.
+- External browser requests are blocked; all needed UI scripts/assets load locally.
+- Python compilation, dependency consistency, JavaScript syntax, local README
+  links/images, valid PNG files and release ZIP integrity/content checks.
+
+`check_ui.py` rewrites tracked screenshots, so running it can create image diffs
+from timers or timestamps. Inspect those diffs before committing. Test artifacts,
+virtual environments, logs, databases and release packaging under `dist/` are
+ignored by Git. A local `test-ui.log` may exist from redirected test output.
+
+## What has not been validated
+
+There was no access to the deployed Raspberry Pi. Browser checks simulate network
+operations and do not establish that real `iptables` forwarding, `tc` bandwidth
+limits, DHCP/DNS, camera hardware, systemd services or remote tunnels work on the
+owner's installation. No production deployment was performed. Do not describe
+the UI/browser verification as hardware validation or a security audit.
+
+## GitHub workflow and handoff guidance
+
+GitHub access initially failed under restricted session permissions. After the
+owner changed the session and asked to retry, cloning, authenticated CLI access,
+pushing `main` and publishing the release all succeeded. Do not treat the original
+access failure as current state; check the environment you actually receive.
+
+The authenticated account in this session was `Rohan-Reyes`. Repository-local Git
+identity was set to that login and its GitHub noreply email; global Git settings
+were not changed. Do not print or persist authentication tokens.
+
+Before further edits, read this file and `CHANGELOG.md`, inspect `git status`, and
+fetch remote state. Preserve unrelated work and deployment-specific configuration.
+Use the preview/browser check for UI changes; do not start the production entry
+point or run the firewall script just to inspect the UI. Do not rewrite existing
+published tags or release assets for routine follow-up changes. The owner has not
+requested any additional redesign or release after 1.1.0.
